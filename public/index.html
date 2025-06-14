@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #ff0000;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+        }
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background: #cc0000;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            background: #f2dede;
+            color: #a94442;
+        }
+        .success {
+            background: #dff0d8;
+            color: #3c763d;
+        }
+        #downloadLink {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Downloader</h1>
+        <div class="form-group">
+            <label for="url">YouTube URL:</label>
+            <input type="url" id="url" placeholder="https://www.youtube.com/watch?v=..." required>
+        </div>
+        <div class="form-group">
+            <label for="format">Download Format:</label>
+            <select id="format">
+                <option value="best">Best Quality</option>
+                <option value="audio">Audio Only (MP3)</option>
+            </select>
+        </div>
+        <button id="downloadBtn">Download</button>
+        <div id="status"></div>
+        <a id="downloadLink" href="#" target="_blank">Download your file here</a>
+    </div>
+
+    <script>
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const url = document.getElementById('url').value;
+            const format = document.getElementById('format').value;
+            const status = document.getElementById('status');
+            const downloadLink = document.getElementById('downloadLink');
+            
+            if (!url) {
+                status.textContent = 'Please enter a YouTube URL';
+                status.className = 'error';
+                status.style.display = 'block';
+                return;
+            }
+            
+            // Reset UI
+            status.textContent = 'Starting download...';
+            status.className = '';
+            status.style.display = 'block';
+            downloadLink.style.display = 'none';
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, format })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.textContent = 'Download complete!';
+                    status.className = 'success';
+                    downloadLink.href = data.filePath;
+                    downloadLink.textContent = `Download ${data.fileName}`;
+                    downloadLink.style.display = 'inline-block';
+                } else {
+                    status.textContent = `Error: ${data.error}`;
+                    status.className = 'error';
+                    if (data.details) {
+                        status.textContent += ` (${data.details})`;
+                    }
+                }
+            } catch (error) {
+                status.textContent = `Error: ${error.message}`;
+                status.className = 'error';
+            }
+        });
+    </script>
+</body>
+</html>
